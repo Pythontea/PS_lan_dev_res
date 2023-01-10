@@ -1,0 +1,30 @@
+# Create an array to store the information
+$computers = @()
+
+# Get a list of computers on the LAN
+$computerList = Get-Content "C:\computerlist.txt"
+
+# Loop through each computer in the list
+foreach ($computer in $computerList) {
+    # Get information about the computer's CPU
+    $cpu = Get-WmiObject -Class Win32_Processor -ComputerName $computer
+
+    # Get information about the computer's memory
+    $memory = Get-WmiObject -Class Win32_OperatingSystem -ComputerName $computer
+
+    # Get information about the computer's disk
+    $disk = Get-WmiObject -Class Win32_LogicalDisk -Filter "DeviceID='C:'" -ComputerName $computer
+
+    # Create a new object to store the information
+    $computerInfo = New-Object PSObject
+    $computerInfo | Add-Member -MemberType NoteProperty -Name "ComputerName" -Value $computer
+    $computerInfo | Add-Member -MemberType NoteProperty -Name "CPU" -Value $cpu.Name
+    $computerInfo | Add-Member -MemberType NoteProperty -Name "Memory" -Value ($memory.TotalVisibleMemorySize / 1MB) + " MB"
+    $computerInfo | Add-Member -MemberType NoteProperty -Name "Disk" -Value ($disk.Size / 1GB) + " GB"
+
+    # Add the computer information to the array
+    $computers += $computerInfo
+}
+
+# Output the information
+$computers | Format-Table -Property ComputerName, CPU, Memory, Disk
